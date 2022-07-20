@@ -24,10 +24,11 @@ class Transformer implements TransformerInterface
      * @param string              $namespacePrefix
      * @param FilesystemInterface $filesystem
      */
-    public function __construct(string $namespacePrefix, FilesystemInterface $filesystem)
+    public function __construct(string $namespacePrefix, FilesystemInterface $filesystem, ProjectConfig $configCollection)
     {
         $this->namespacePrefix = StringUtil::ensureDoubleBackwardSlash($namespacePrefix);
         $this->filesystem = $filesystem;
+        $this->configCollection = $configCollection;
     }
 
     /**
@@ -65,6 +66,7 @@ class Transformer implements TransformerInterface
         $this->prefixUseConst($targetFile);
         $this->prefixUseFunction($targetFile);
         $this->prefixUse($targetFile);
+        $this->prefixExtends($targetFile);
     }
 
     /**
@@ -154,13 +156,40 @@ class Transformer implements TransformerInterface
      */
     private function prefixUse(string $targetFile)
     {
+        $extra_rules = "";
+        if($extra_rules = $this->configCollection->getUseExcludes()){
+            $extra_rules = "(" . implode(')|(', $extra_rules) . ")|";
+        }
         $pattern = sprintf(
-            '/%1$s\\s+(?!(const)|(function)|(%2$s)|(\\\\(?!.*\\\\.*))|(Composer(\\\\|;)|(?!.*\\\\.*)))/',
+            '/%1$s\\s+(?!%3$s(const)|(function)|(%2$s)|(\\\\(?!.*\\\\.*))|(Composer(\\\\|;)|(?!.*\\\\.*)))/',
             'use',
-            $this->namespacePrefix
+            $this->namespacePrefix,
+            $extra_rules
         );
         $replacement = sprintf('%1$s %2$s', 'use', $this->namespacePrefix);
-
+        die($pattern);
         $this->replace($pattern, $replacement, $targetFile);
+    }
+
+    /**
+     * Prefix `use` keywords at the given path.
+     *
+     * @param string $targetFile
+     *
+     * @return void
+     */
+    private function prefixExtends(string $targetFile)
+    {
+        if($extra_rules = $this->configCollection->getExtendsNamespace()){
+            $extra_rules = implode('|', $extra_rules);
+            $pattern = sprintf(
+                '/(.*)extends(\\s+)(%2$s)(.*)/',
+                $this->namespacePrefix,
+                $extra_rules
+            );
+            $replacement = sprintf('${1}extends${2}\\%1$s${3}${4}', trim($this->namespacePrefix, '\\'));
+
+            $this->replace($pattern, $replacement, $targetFile);
+        }
     }
 }

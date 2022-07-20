@@ -29,6 +29,28 @@ class ProjectConfig extends Config implements ProjectConfigInterface
         return array_merge(static::DEFAULT_EXCLUDES, $excludes, $this->extraExcludes);
     }
 
+    /**
+     * @return string[]
+     */
+    public function getUseExcludes(): array
+    {
+        $extra = $this->get('extra');
+        $excludes = $extra['imposter']['useExcludes'] ?? [];
+
+        return $excludes;
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getExtendsNamespace(): array
+    {
+        $extra = $this->get('extra');
+        $excludes = $extra['imposter']['extendsNamespace'] ?? [];
+
+        return $excludes;
+    }
+
     public function getImposterNamespace(): string
     {
         $extra = $this->get('extra');

@@ -19,7 +19,7 @@ class ImposterFactory
         $projectConfig = ConfigFactory::buildProjectConfig($projectPath . '/composer.json', $filesystem);
         $projectConfig->setExtraExcludes($extraExcludes);
 
-        $transformer = new Transformer($projectConfig->getImposterNamespace(), $filesystem);
+        $transformer = new Transformer($projectConfig->getImposterNamespace(), $filesystem, $projectConfig);
         $configCollection = ConfigCollectionFactory::forProject(
             $projectConfig,
             $filesystem
